@@ -23,27 +23,25 @@ def send_templated_email(receiver_email: str, template_name: str, sender_email: 
             TemplateData=json.dumps(template_data)
         )
     except ClientError as e:
-        print(e.response['Error']['Message'])
         return {
             "statusCode": 400,
             "body": json.dumps({'error_message': e.response['Error']['Message']})
         }
 
-    print("Email sent! Message ID:", response['MessageId'])
     return {
         "statusCode": 200,
-        "body": json.dumps({'message': 'Email sent successfully!'})
+        "body": json.dumps({'message': f"Email sent successfully! MessageId: {response['MessageId']}"})
     }
 
 
 def lambda_handler(event, context):
     try:
-        receiver_email = event["receiver_email"]
-        sender_email = event["sender_email"]
-        template_name = event["template_name"]
-        placeholders = event["placeholders"]
-
-        return send_templated_email(receiver_email, template_name, sender_email, placeholders)
+        return send_templated_email(
+            receiver_email=event["receiver_email"],
+            template_name=event["sender_email"],
+            sender_email=event["template_name"],
+            template_data=event["placeholders"],
+        )
     except Exception as e:
         return {
             "statusCode": 400,

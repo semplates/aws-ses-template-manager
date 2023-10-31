@@ -5,3 +5,4 @@ venv
 */**/builds
 *.tfstate*
 *tfvars
+*/**/bin
