@@ -1,0 +1,12 @@
+{
+  "name": "ses-lambda",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Jonathan Mandt <jonathan@semplates.io>",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "dependencies": {
+    "aws-sdk": "^2.1484.0"
+  }
+}
