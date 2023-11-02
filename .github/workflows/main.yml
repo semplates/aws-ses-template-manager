@@ -1,0 +1,99 @@
+name: 'Terraform Apply and Destroy'
+
+on:
+  workflow_dispatch:
+    inputs:
+      AWS_ACCESS_KEY_ID:
+        description: 'Your AWS Access Key ID'
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        description: 'Your AWS Secret Access Key'
+        required: true
+      AWS_REGION:
+        description: 'Your AWS Default Region (e.g., us-west-1)'
+        required: true
+        default: 'us-west-1'
+      SENDER_EMAIL:
+        description: 'The email address from which emails will be sent'
+        required: true
+
+jobs:
+  apply:
+    name: 'Terraform Apply'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ github.event.inputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ github.event.inputs.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.AWS_REGION }}
+
+      # Set up Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      # Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+
+      # Apply Terraform configuration
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        working-directory: ./terraform
+
+      # Upload Terraform state to artifact
+      - name: Upload Terraform State
+        uses: actions/upload-artifact@v2
+        with:
+          name: terraform-state
+          path: terraform/terraform.tfstate
+
+  destroy:
+    name: 'Terraform Destroy'
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.AWS_ACCESS_KEY_ID != '' }}
+    needs: apply
+    environment: production
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ github.event.inputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ github.event.inputs.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.AWS_REGION }}
+
+      # Download Terraform state from artifact
+      - name: Download Terraform State
+        uses: actions/download-artifact@v2
+        with:
+          name: terraform-state
+          path: terraform
+
+      # Set up Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      # Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+
+      # Destroy Terraform configuration
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
+        working-directory: ./terraform
