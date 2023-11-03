@@ -1,37 +1,59 @@
-import { SES } from 'aws-sdk';
+import { SendTemplatedEmailCommand, SESClient } from "@aws-sdk/client-ses";
 
-const ses = new SES({ region: 'us-west-1' });  // Adjust the region if necessary.
+// Set up the AWS SES client.
+const region = process.env.AWS_REGION;
+const sesClient = new SESClient({region});
 
-const SENDER_EMAIL = "sender@example.com";  // Replace with your sender's email.
-const TEMPLATE_NAME = "MyTemplate";  // The name of the template you've created in SES.
-
-export async function handler(event) {
-    const receiverEmail = event.receiver_email;
-    const templateData = event.template_data;
-
+const sendTemplatedEmail = async (receiverEmail, templateName, senderEmail, templateData) => {
+  try {
     const params = {
-        Source: SENDER_EMAIL,
-        Destination: {
-            ToAddresses: [
-                receiverEmail
-            ]
-        },
-        Template: TEMPLATE_NAME,
-        TemplateData: JSON.stringify(templateData)
+      Source: senderEmail,
+      Destination: {
+        ToAddresses: [receiverEmail],
+      },
+      Template: templateName,
+      TemplateData: JSON.stringify(templateData),
     };
 
-    try {
-        const response = await ses.sendTemplatedEmail(params).promise();
-        console.log("Email sent! Message ID:", response.MessageId);
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ message: 'Email sent successfully!' })
-        };
-    } catch (error) {
-        console.error("Error sending email:", error);
-        return {
-            statusCode: 400,
-            body: JSON.stringify({ error_message: error.message })
-        };
-    }
+    const command = new SendTemplatedEmailCommand(params);
+    const response = await sesClient.send(command);
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({message: `Email sent successfully! MessageId: ${response.MessageId}`}),
+    };
+  } catch (error) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({error_message: error.message}),
+    };
+  }
 };
+
+export const lambdaHandler = async (event, context) => {
+  try {
+    const {receiverEmail, senderEmail, templateName, placeholders} = event;
+    return await sendTemplatedEmail(receiverEmail, templateName, senderEmail, placeholders);
+  } catch (error) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({errorMessage: `Missing key in input: ${error.message}`}),
+    };
+  }
+};
+
+// Run locally if this file is executed directly
+if (process.env.NODE_ENV !== 'production') {
+
+  const event = {
+    "receiverEmail": "jondoe@example.io",
+    "senderEmail": "jondoe@example.io",
+    "templateName": "SEMPLATES_DEMO_TEMPLATE",
+    "placeholders": {
+      "FIRST_NAME": "Jon",
+      "LAST_NAME": "Doe"
+    }
+  }
+
+  lambdaHandler(event, {}).then(console.log).catch(console.error);
+}
