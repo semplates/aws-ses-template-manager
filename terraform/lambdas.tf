@@ -25,8 +25,10 @@ resource "aws_iam_policy" "ses_send_templated_email" {
   policy      = data.aws_iam_policy_document.ses_send_templated_email_policy.json
 }
 
-module "lambda_function" {
-  source = "terraform-aws-modules/lambda/aws"
+module "python_lambda_function" {
+  source        = "terraform-aws-modules/lambda/aws"
+  version       = "6.3.0"
+  count         = contains(split(",", var.programming_languages), "python") ? 1 : 0
   function_name = "PythonSesEmailSender"
   source_path   = "${path.module}/../lambdas/python/"
   handler       = "main.lambda_handler"
@@ -34,3 +36,29 @@ module "lambda_function" {
   attach_policy = true
   policy        = aws_iam_policy.ses_send_templated_email.arn
 }
+
+
+module "js_lambda_function" {
+  source        = "terraform-aws-modules/lambda/aws"
+  version       = "6.3.0"
+  count         = contains(split(",", var.programming_languages), "js") ? 1 : 0
+  function_name = "JavaScriptSesEmailSender"
+  source_path   = "${path.module}/../lambdas/js/"
+  handler       = "index.lambdaHandler"
+  runtime       = "nodejs18.x"
+  attach_policy = true
+  policy        = aws_iam_policy.ses_send_templated_email.arn
+}
+
+module "go_lambda_function" {
+  source        = "terraform-aws-modules/lambda/aws"
+  version       = "6.3.0"
+  count         = contains(split(",", var.programming_languages), "go") ? 1 : 0
+  function_name = "GoSesEmailSender"
+  source_path   = "${path.module}/../lambdas/go/bin/"
+  handler       = "aws-lambda-go"
+  runtime       = "go1.x"
+  attach_policy = true
+  policy        = aws_iam_policy.ses_send_templated_email.arn
+}
+

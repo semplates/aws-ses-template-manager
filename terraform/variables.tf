@@ -1,8 +1,11 @@
 variable "aws_region" {
   type = string
-  default = "eu-central-1"
 }
 
 variable "verified_email" {
+  type = string
+}
+
+variable "programming_languages" {
   type = string
 }
