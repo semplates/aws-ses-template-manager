@@ -1,0 +1,83 @@
+name: 'Terraform Apply'
+
+on:
+  workflow_dispatch:
+    inputs:
+      AWS_ACCESS_KEY_ID:
+        description: 'Your AWS Access Key ID'
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        description: 'Your AWS Secret Access Key'
+        required: true
+      AWS_REGION:
+        description: 'Your AWS Default Region (e.g., us-west-1)'
+        required: true
+        default: 'eu-central-1'
+      VERIFIED_EMAIL:
+        description: 'The email address from which emails will be sent'
+        required: true
+      PROGRAMMING_LANGUAGES:
+        description: 'the programming languages you would like to deploy in AWS Lambda. No blanks allowed!'
+        required: true
+        default: "go,js,python"
+
+jobs:
+  apply:
+    name: 'Terraform Apply'
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build Go Lambda binary
+        if: contains(github.event.inputs.PROGRAMMING_LANGUAGES, 'go')
+        run: |
+          docker run --rm \
+            -e GOOS=linux \
+            -e GOARCH=amd64 \
+            -v "${PWD}:/app" \
+            -w /app golang:1.21.3 \
+            go build -ldflags="-s -w" -o bin/aws-lambda-go .
+        working-directory: ./lambdas/go
+
+      # Set up Python 3.11
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.11'
+
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ github.event.inputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ github.event.inputs.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ github.event.inputs.AWS_REGION }}
+
+      # Set up Terraform CLI
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v1
+
+      # Initialize Terraform
+      - name: Terraform Init
+        run: terraform init
+        working-directory: ./terraform
+
+      # Apply Terraform configuration
+      - name: Terraform Apply
+        run: >
+          terraform apply -auto-approve \
+            -var="verified_email=${{ github.event.inputs.verified_email }}" \
+            -var="aws_region=${{ github.event.inputs.aws_region }}" \
+            -var="programming_languages=${{ github.event.inputs.programming_languages }}"
+        working-directory: ./terraform
+
+      # Upload Terraform state to GitHub Artifacts
+      - name: Upload Terraform State
+        uses: actions/upload-artifact@v3
+        with:
+          name: terraform-state
+          path: ./terraform/*.tfstate
