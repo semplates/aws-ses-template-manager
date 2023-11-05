@@ -1,5 +1,8 @@
 # Semplates AWS SES Template Manager
 
+![Go, Javascript and Python with AWS Lambda, SES and Terraform](resources/github-image.jpg)
+
+
 [Semplates](https://semplates.io) offers a graphical user interface to manage templates on AWS SES. If you are using our services, 
 this repository can help you to deploy a Lambda function to AWS in order to easily send out automated emails to your users.
 If you do not want to use a Lambda function to send transactional emails, you can use the code provided in this repository and integrate it into you application.
