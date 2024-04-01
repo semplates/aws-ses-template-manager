@@ -1,6 +1,7 @@
 .idea
 */**/node_modules
 venv
+.env
 */**/.terraform*
 */**/builds
 *.tfstate*
