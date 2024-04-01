@@ -1,0 +1,13 @@
+{
+  "name": "ses-template-migration",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Jonathan Mandt <jonathan@semplates.io>",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "dependencies": {
+    "aws-sdk": "^2.1584.0",
+    "dotenv": "^16.4.5"
+  }
+}
