@@ -1,0 +1,14 @@
+{
+  "name": "ses-templated-emails-with_attachments",
+  "version": "1.0.0",
+  "main": "scripts/index.js",
+  "author": "Jonathan Mandt <jonathan@semplates.io>",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.540.0",
+    "handlebars": "^4.7.8",
+    "nodemailer": "^6.9.13"
+  }
+}
